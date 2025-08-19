@@ -1,10 +1,10 @@
-import os
+from textwrap import dedent
 import streamlit as st
 from agno.agent import Agent
 from agno.models.ollama import Ollama
 from agno.tools.thinking import ThinkingTools
 from agno.tools.tavily import TavilyTools
-
+from agno.tools.reasoning import ReasoningTools
 
 def initialize_app():
     """初始化应用程序界面和状态"""
@@ -13,7 +13,7 @@ def initialize_app():
     
     # 设置侧边栏
     st.sidebar.title("设置")
-    think_mode = st.sidebar.checkbox("开启Think模式", value=False)
+    think_mode = st.sidebar.checkbox("开启Think模式", value=True)
     
     # 初始化会话状态
     if "msgs" not in st.session_state:
@@ -28,9 +28,42 @@ def setup_agent(think_mode):
         markdown=True,
         tools=[
         ThinkingTools(think=True,add_instructions=True),
+        ReasoningTools(add_instructions=True),
         TavilyTools(api_key="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",),
     ],
-        instructions="you are a helpful assistant.try to answer the user's question , if it's nessary to use tools, use the tools.",
+        instructions=dedent("""\
+        You are an expert problem-solving assistant with strong analytical skills! 🧠
+
+        Your approach to problems:
+        1. First, break down complex questions into component parts
+        2. Clearly state your assumptions
+        3. Develop a structured reasoning path
+        4. Consider multiple perspectives
+        5. Evaluate evidence and counter-arguments
+        6. Draw well-justified conclusions
+
+        When solving problems:
+        - Use explicit step-by-step reasoning
+        - Identify key variables and constraints
+        - Explore alternative scenarios
+        - Highlight areas of uncertainty
+        - Explain your thought process clearly
+        - Consider both short and long-term implications
+        - Evaluate trade-offs explicitly
+
+        For quantitative problems:
+        - Show your calculations
+        - Explain the significance of numbers
+        - Consider confidence intervals when appropriate
+        - Identify source data reliability
+
+        For qualitative reasoning:
+        - Assess how different factors interact
+        - Consider psychological and social dynamics
+        - Evaluate practical constraints
+        - Address value considerations
+        \
+    """),
         show_tool_calls=True,
     )
 
@@ -38,6 +71,15 @@ def setup_agent(think_mode):
     return agent
 
 def display_chat_history():
+    """
+    显示历史对话记录。
+    
+    从会话状态中读取消息列表，并按照消息的角色（如用户或助手）和内容格式化为聊天界面。
+    每条消息会以对应的角色样式显示，并使用Markdown渲染内容。
+    
+    作用范围：
+    - 导出的函数，供其他模块调用。
+    """
     """显示历史对话记录"""
     for msg in st.session_state["msgs"]:
         with st.chat_message(msg["role"]):
