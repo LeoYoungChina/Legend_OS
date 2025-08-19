@@ -27,17 +27,25 @@ if prompt:
         
     # 生成并显示助手的回复    
     with st.chat_message("assistant"):
+        # 创建一个空的消息占位符
+        message_placeholder = st.empty()
+        full_response = ""
         
-        # 使用ollama大模型平台与AI模型进行对话（非流式）
-        response = ollama.chat(
-             model="qwen:7b-chat",
+        # 使用ollama大模型平台与AI模型进行对话（流式）
+        for chunk in ollama.chat(
+             model="Qwen3:1.7B",
              messages=st.session_state["msgs"],
-             stream=False,
-         )
+             stream=True,
+         ):
+            # 获取每个响应块的内容并添加到完整响应中
+            if "content" in chunk["message"]:
+                content_chunk = chunk["message"]["content"]
+                full_response += content_chunk
+                # 实时更新显示的内容
+                message_placeholder.markdown(full_response + "|")
         
-        # 解析并显示助手的回复内容
-        msg = response["message"]["content"]
-        st.markdown(msg)
+        # 显示最终完整的响应（去掉光标）
+        message_placeholder.markdown(full_response)
         
-        # 更新对话记录以包含助手的回复
-        st.session_state["msgs"].append({"role": "assistant", "content": msg})
+        # 更新对话记录以包含助手的完整回复
+        st.session_state["msgs"].append({"role": "assistant", "content": full_response})
